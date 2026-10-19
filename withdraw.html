@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Withdraw • Express Trade</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(circle at 20% 0%, rgba(201,149,79,0.07), transparent 42%),
+      radial-gradient(circle at 100% 100%, rgba(201,149,79,0.05), transparent 45%),
+      var(--ink);
+  }
+  .shell{max-width:560px;margin:0 auto;}
+  .hidden{display:none !important;}
+
+  /* PAGE ENTRANCE */
+  .page-enter{animation:pageEnter .5s cubic-bezier(0.16,1,0.3,1);}
+  @keyframes pageEnter{
+    from{opacity:0;transform:translateY(12px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+
+  /* CARD */
+  .card{
+    animation:cardIn .5s cubic-bezier(0.16,1,0.3,1);
+    position:relative;
+    overflow:hidden;
+    box-shadow:0 30px 60px -30px rgba(0,0,0,0.6);
+  }
+  @keyframes cardIn{
+    from{opacity:0;transform:translateY(20px) scale(.98);}
+    to{opacity:1;transform:translateY(0) scale(1);}
+  }
+  .card::before{
+    content:'';
+    position:absolute;
+    top:0;left:0;right:0;
+    height:1px;
+    background:linear-gradient(90deg,transparent,rgba(201,149,79,0.35),transparent);
+  }
+
+  /* ICON */
+  .icon-big{
+    font-size:2.2rem;
+    color:var(--copper);
+    margin-bottom:14px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:52px;height:52px;
+    border-radius:14px;
+    background:rgba(201,149,79,0.08);
+    border:1px solid rgba(201,149,79,0.2);
+    animation:iconPulse 3s ease-in-out infinite;
+  }
+  @keyframes iconPulse{
+    0%,100%{box-shadow:0 0 0 0 rgba(201,149,79,0.2);}
+    50%{box-shadow:0 0 0 10px rgba(201,149,79,0);}
+  }
+
+  /* STEP TABS */
+  .step{display:none;}
+  .step.active{display:block;animation:stepSlide .35s cubic-bezier(0.16,1,0.3,1);}
+  .step.slide-back{animation:stepSlideBack .35s cubic-bezier(0.16,1,0.3,1);}
+  @keyframes stepSlide{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
+  @keyframes stepSlideBack{from{opacity:0;transform:translateX(-20px);}to{opacity:1;transform:translateX(0);}}
+
+  /* PROGRESS BAR */
+  .step-progress{display:flex;align-items:center;gap:6px;margin-bottom:22px;}
+  .step-dot{
+    flex:1;height:3px;background:#232a3a;border-radius:3px;
+    position:relative;overflow:hidden;
+    transition:background .4s;
+  }
+  .step-dot::after{
+    content:'';
+    position:absolute;inset:0;
+    background:linear-gradient(90deg,var(--copper),#f2c14e);
+    transform:scaleX(0);
+    transform-origin:left;
+    transition:transform .45s cubic-bezier(0.16,1,0.3,1);
+  }
+  .step-dot.active::after{transform:scaleX(1);}
+  .step-dot.done::after{transform:scaleX(1);background:var(--copper-dim);}
+
+  .modal-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;gap:12px;}
+  .modal-head h3{
+    font-family:'Fraunces',serif;font-size:1.5rem;font-weight:500;
+    letter-spacing:-.3px;margin-bottom:4px;
+    background:linear-gradient(135deg,#f5f8ff,#b8c3e6);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  }
+  .modal-head p{font-size:.82rem;color:var(--text-faint);line-height:1.5;}
+
+  /* BALANCE CHIP */
+  .balance-chip{
+    background:linear-gradient(180deg,var(--panel-2),#0e1219);
+    border:1px solid var(--line);
+    border-radius:12px;padding:14px 18px;
+    display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:18px;
+    position:relative;overflow:hidden;
+    animation:chipIn .5s .1s cubic-bezier(0.16,1,0.3,1) both;
+  }
+  @keyframes chipIn{
+    from{opacity:0;transform:translateY(-6px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+  .balance-chip::before{
+    content:'';position:absolute;top:0;left:0;right:0;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(201,149,79,0.3),transparent);
+  }
+  .balance-chip .bc-label{
+    font-size:.72rem;color:var(--text-faint);
+    text-transform:uppercase;letter-spacing:.8px;font-weight:600;
+    display:flex;align-items:center;
+  }
+  .balance-chip .bc-value{
+    font-family:'Fraunces',serif;font-size:1.25rem;font-weight:600;
+    color:var(--copper);
+    transition:color .3s;
+  }
+  .balance-chip .bc-value.bump{
+    animation:valBump .6s ease;
+  }
+  @keyframes valBump{
+    0%{transform:scale(1);}
+    40%{transform:scale(1.08);color:#f2c14e;}
+    100%{transform:scale(1);}
+  }
+
+  /* AMOUNT PRESETS */
+  .amount-presets{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0 14px;}
+  .amount-presets button{
+    padding:12px 0;
+    border:1px solid var(--line);
+    background:var(--panel-2);
+    color:var(--text);
+    border-radius:9px;
+    font-weight:600;
+    font-size:.85rem;
+    cursor:pointer;
+    transition:transform .15s, border-color .2s, color .2s, background .2s;
+    font-family:inherit;
+    position:relative;
+    overflow:hidden;
+  }
+  .amount-presets button:hover{border-color:var(--copper-dim);color:var(--text);transform:translateY(-2px);}
+  .amount-presets button:active{transform:scale(.96);}
+  .amount-presets button.active{
+    border-color:var(--copper);
+    color:var(--copper);
+    background:rgba(201,149,79,0.08);
+    box-shadow:0 0 0 3px rgba(201,149,79,0.1);
+    animation:presetPop .3s ease;
+  }
+  @keyframes presetPop{
+    0%{transform:scale(1);}
+    50%{transform:scale(1.05);}
+    100%{transform:scale(1);}
+  }
+
+  /* FIELDS */
+  .field{margin-bottom:14px;animation:fieldIn .35s ease both;}
+  .field:nth-child(1){animation-delay:.02s;}
+  .field:nth-child(2){animation-delay:.05s;}
+  .field:nth-child(3){animation-delay:.08s;}
+  .field:nth-child(4){animation-delay:.11s;}
+  .field:nth-child(5){animation-delay:.14s;}
+  @keyframes fieldIn{
+    from{opacity:0;transform:translateY(6px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+  .field label{display:block;font-size:.75rem;color:var(--text-dim);margin-bottom:6px;font-weight:500;}
+  .field input{
+    width:100%;padding:13px 16px;
+    background:var(--panel-2);border:1px solid var(--line);
+    border-radius:10px;color:var(--text);font-size:.9rem;
+    outline:none;font-family:inherit;
+    transition:border-color .2s, box-shadow .2s, background .2s;
+  }
+  .field input:focus{
+    border-color:var(--copper);
+    box-shadow:0 0 0 3px rgba(201,149,79,0.1);
+    background:var(--panel);
+  }
+  .field input::placeholder{color:var(--text-faint);}
+
+  /* INSUFFICIENT WARNING */
+  .insufficient{
+    background:#2a1a1a;border:1px solid #4a2a28;border-radius:10px;
+    padding:10px 14px;font-size:.78rem;color:var(--rose);
+    margin-bottom:14px;display:none;align-items:center;gap:8px;
+  }
+  .insufficient.show{
+    display:flex;
+    animation:shake .4s ease;
+  }
+  @keyframes shake{
+    0%,100%{transform:translateX(0);}
+    25%{transform:translateX(-5px);}
+    75%{transform:translateX(5px);}
+  }
+
+  /* PAYMENT METHOD CARDS */
+  .method-option{
+    display:flex;align-items:center;gap:14px;
+    background:var(--panel-2);border:1px solid var(--line);
+    border-radius:14px;padding:16px;
+    margin-bottom:10px;cursor:pointer;
+    transition:transform .2s, border-color .2s, background .2s, box-shadow .2s;
+    position:relative;overflow:hidden;
+    animation:methodIn .4s cubic-bezier(0.16,1,0.3,1) both;
+  }
+  .method-option:nth-child(1){animation-delay:.02s;}
+  .method-option:nth-child(2){animation-delay:.06s;}
+  .method-option:nth-child(3){animation-delay:.10s;}
+  .method-option:nth-child(4){animation-delay:.14s;}
+  @keyframes methodIn{
+    from{opacity:0;transform:translateX(-12px);}
+    to{opacity:1;transform:translateX(0);}
+  }
+  .method-option::before{
+    content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+    background:var(--copper);
+    transform:scaleY(0);
+    transition:transform .25s;
+  }
+  .method-option:hover{
+    border-color:var(--copper);
+    background:var(--panel);
+    transform:translateX(3px);
+    box-shadow:0 8px 25px -12px rgba(201,149,79,0.3);
+  }
+  .method-option:hover::before{transform:scaleY(1);}
+  .method-option:active{transform:translateX(3px) scale(.99);}
+
+  .method-icon{
+    width:44px;height:44px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:1.15rem;flex:none;color:#fff;
+    transition:transform .3s;
+    box-shadow:0 6px 16px -6px rgba(0,0,0,0.5);
+  }
+  .method-option:hover .method-icon{transform:scale(1.08) rotate(-4deg);}
+  .method-icon.btc{background:linear-gradient(160deg,#f7931a,#c46e0f);}
+  .method-icon.pp{background:linear-gradient(160deg,#0070ba,#003087);}
+  .method-icon.ca{background:linear-gradient(160deg,#00d632,#00a026);}
+  .method-icon.bank{background:linear-gradient(160deg,#3a6ec9,#1f3f7e);}
+  .method-info{flex:1;min-width:0;}
+  .method-info .m-name{font-weight:600;font-size:.92rem;color:var(--text);}
+  .method-info .m-desc{font-size:.72rem;color:var(--text-faint);margin-top:2px;line-height:1.4;}
+  .method-arrow{color:var(--text-faint);font-size:.8rem;transition:transform .2s, color .2s;}
+  .method-option:hover .method-arrow{color:var(--copper);transform:translateX(4px);}
+
+  /* SUMMARY */
+  .summary{
+    background:linear-gradient(180deg,var(--panel-2),#0e1219);
+    border:1px solid var(--line);
+    border-radius:14px;padding:18px;margin-bottom:18px;
+    position:relative;overflow:hidden;
+    animation:summaryIn .4s ease both;
+  }
+  @keyframes summaryIn{
+    from{opacity:0;transform:translateY(6px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+  .summary::before{
+    content:'';position:absolute;top:0;left:0;right:0;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(201,149,79,0.3),transparent);
+  }
+  .summary-row{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:10px 0;border-bottom:1px solid #1e2433;
+    font-size:.85rem;gap:10px;
+  }
+  .summary-row:last-child{border-bottom:none;}
+  .summary-row .s-label{color:var(--text-faint);}
+  .summary-row .s-value{font-weight:600;color:var(--text);text-align:right;word-break:break-word;}
+  .summary-row.total{border-top:1px solid var(--line);padding-top:14px;margin-top:6px;}
+  .summary-row.total .s-label{color:var(--text);font-weight:600;}
+  .summary-row.total .s-value{
+    font-family:'Fraunces',serif;font-size:1.3rem;color:var(--copper);
+    animation:valBump .6s ease;
+  }
+
+  /* BUTTONS */
+  .btn{
+    transition:transform .18s, box-shadow .2s, background .2s, border-color .2s;
+    position:relative;
+    overflow:hidden;
+  }
+  .btn:hover:not(:disabled){transform:translateY(-2px);}
+  .btn:active:not(:disabled){transform:translateY(0) scale(.98);}
+  .btn-primary{
+    box-shadow:0 10px 25px -12px rgba(201,149,79,0.5);
+  }
+  .btn-primary:hover:not(:disabled){
+    box-shadow:0 14px 32px -12px rgba(201,149,79,0.75);
+  }
+
+  .btn-ghost{
+    background:transparent;border:1px solid var(--line);color:var(--text-dim);
+    width:100%;padding:12px;border-radius:10px;font-weight:600;cursor:pointer;
+    margin-top:10px;font-size:.85rem;font-family:inherit;
+    transition:border-color .2s, color .2s, background .2s, transform .18s;
+  }
+  .btn-ghost:hover{
+    border-color:var(--copper-dim);color:var(--text);background:var(--panel-2);
+  }
+  .btn-ghost:active{transform:scale(.98);}
+
+  /* PROCESSING SPINNER */
+  .processing-wrap{text-align:center;padding:40px 20px 30px;animation:fieldIn .4s ease;}
+  .spinner{
+    width:64px;height:64px;margin:0 auto 24px;border-radius:50%;
+    border:3px solid rgba(201,149,79,0.15);border-top-color:var(--copper);
+    animation:spin 1s linear infinite;position:relative;
+  }
+  .spinner::after{
+    content:'';position:absolute;inset:8px;border-radius:50%;
+    border:2px solid transparent;border-top-color:#f2c14e;
+    animation:spin 0.8s linear infinite reverse;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .processing-wrap h3{font-family:'Fraunces',serif;font-size:1.2rem;margin-bottom:8px;}
+  .processing-wrap p{font-size:.85rem;color:var(--text-faint);line-height:1.55;}
+
+  /* SUCCESS */
+  .success-wrap{text-align:center;padding:30px 20px 10px;animation:fieldIn .4s ease;}
+  .check-circle{
+    width:88px;height:88px;margin:0 auto 22px;border-radius:50%;
+    background:radial-gradient(circle,rgba(63,185,143,0.18),rgba(63,185,143,0.05));
+    border:2px solid var(--teal);
+    display:flex;align-items:center;justify-content:center;position:relative;
+    animation:popIn .5s cubic-bezier(0.16,1,0.3,1);
+  }
+  @keyframes popIn{
+    0%{transform:scale(0);opacity:0;}
+    60%{transform:scale(1.1);}
+    100%{transform:scale(1);opacity:1;}
+  }
+  .check-circle::before{
+    content:'';position:absolute;inset:-8px;border-radius:50%;
+    border:2px solid rgba(63,185,143,0.3);
+    animation:ripple 1.8s ease-out infinite;
+  }
+  @keyframes ripple{
+    0%{transform:scale(1);opacity:0.6;}
+    100%{transform:scale(1.5);opacity:0;}
+  }
+  .check-svg{width:44px;height:44px;}
+  .check-svg path{
+    stroke:var(--teal);stroke-width:3.5;fill:none;
+    stroke-linecap:round;stroke-linejoin:round;
+    stroke-dasharray:60;stroke-dashoffset:60;
+    animation:drawCheck .7s .25s ease forwards;
+  }
+  @keyframes drawCheck{to{stroke-dashoffset:0;}}
+  .success-wrap h3{
+    font-family:'Fraunces',serif;font-size:1.5rem;margin-bottom:10px;
+    animation:fieldIn .5s .15s ease both;
+  }
+  .success-wrap p{
+    font-size:.9rem;color:var(--text-dim);line-height:1.7;margin-bottom:10px;
+    animation:fieldIn .5s .25s ease both;
+  }
+  .success-note{
+    background:rgba(201,149,79,0.06);border:1px solid rgba(201,149,79,0.2);
+    border-radius:12px;padding:14px 18px;margin-top:16px;text-align:left;
+    font-size:.82rem;color:var(--text-dim);line-height:1.6;
+    animation:fieldIn .5s .35s ease both;
+  }
+  .success-note i{color:var(--copper);margin-right:6px;}
+
+  .success-wrap .btn{
+    animation:fieldIn .5s .45s ease both;
+  }
+</style>
+</head>
+<body>
+<div class="shell" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;">
+  <div style="width:100%;">
+    <a href="dashboard.html" class="back-link page-enter"><i class="fas fa-arrow-left"></i> Back to dashboard</a>
+    <div class="card">
+
+      <div class="step-progress">
+        <div class="step-dot active" data-step="1"></div>
+        <div class="step-dot" data-step="2"></div>
+        <div class="step-dot" data-step="3"></div>
+        <div class="step-dot" data-step="4"></div>
+      </div>
+
+      <!-- STEP 1 -->
+      <div class="step active" data-step="1">
+        <div class="icon-big"><i class="fas fa-arrow-up"></i></div>
+        <div class="modal-head">
+          <div>
+            <h3>Withdraw Funds</h3>
+            <p>Choose how much you'd like to withdraw</p>
+          </div>
+        </div>
+        <div class="balance-chip">
+          <span class="bc-label"><i class="fas fa-wallet" style="margin-right:6px;color:var(--copper);"></i>Available Balance</span>
+          <span class="bc-value" id="balanceVal">$0.00</span>
+        </div>
+        <div class="amount-presets" id="presets">
+          <button data-amt="50">$50</button>
+          <button data-amt="100">$100</button>
+          <button data-amt="250">$250</button>
+          <button data-amt="500">$500</button>
+        </div>
+        <div class="field">
+          <label>Or enter a custom amount (min $50)</label>
+          <input type="number" id="customAmount" min="50" step="1" placeholder="e.g. 250" />
+        </div>
+        <div class="insufficient" id="insufficient">
+          <i class="fas fa-exclamation-triangle"></i>
+          <span id="insufficientMsg">Amount exceeds your available balance</span>
+        </div>
+        <button class="btn btn-primary btn-block" id="step1Continue">Continue</button>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="step" data-step="2">
+        <div class="modal-head">
+          <div>
+            <h3>Payment Method</h3>
+            <p>Where should we send your funds?</p>
+          </div>
+        </div>
+
+        <div class="method-option" data-method="bitcoin">
+          <div class="method-icon btc"><i class="fab fa-bitcoin"></i></div>
+          <div class="method-info">
+            <div class="m-name">Bitcoin (BTC)</div>
+            <div class="m-desc">Withdraw to your BTC wallet address</div>
+          </div>
+          <i class="fas fa-chevron-right method-arrow"></i>
+        </div>
+
+        <div class="method-option" data-method="paypal">
+          <div class="method-icon pp"><i class="fab fa-paypal"></i></div>
+          <div class="method-info">
+            <div class="m-name">PayPal</div>
+            <div class="m-desc">Receive funds to your PayPal account</div>
+          </div>
+          <i class="fas fa-chevron-right method-arrow"></i>
+        </div>
+
+        <div class="method-option" data-method="cashapp">
+          <div class="method-icon ca"><i class="fas fa-dollar-sign"></i></div>
+          <div class="method-info">
+            <div class="m-name">CashApp</div>
+            <div class="m-desc">Send to your $Cashtag</div>
+          </div>
+          <i class="fas fa-chevron-right method-arrow"></i>
+        </div>
+
+        <div class="method-option" data-method="bank">
+          <div class="method-icon bank"><i class="fas fa-university"></i></div>
+          <div class="method-info">
+            <div class="m-name">Bank Transfer</div>
+            <div class="m-desc">Direct transfer to your bank account</div>
+          </div>
+          <i class="fas fa-chevron-right method-arrow"></i>
+        </div>
+
+        <button class="btn-ghost" data-back="1">Back</button>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="step" data-step="3">
+        <div class="modal-head">
+          <div>
+            <h3 id="detailsTitle">Enter Details</h3>
+            <p id="detailsSub">Enter your payment information</p>
+          </div>
+        </div>
+
+        <div id="methodFields"></div>
+
+        <div class="summary" style="margin-top:16px;">
+          <div class="summary-row"><span class="s-label">Amount</span><span class="s-value" id="sumAmount">—</span></div>
+          <div class="summary-row"><span class="s-label">Method</span><span class="s-value" id="sumMethod">—</span></div>
+          <div class="summary-row"><span class="s-label">Fee</span><span class="s-value">$0.00</span></div>
+          <div class="summary-row total"><span class="s-label">You'll Receive</span><span class="s-value" id="sumReceive">—</span></div>
+        </div>
+
+        <button class="btn btn-primary btn-block" id="submitWithdrawal"><i class="fas fa-paper-plane"></i> Submit Request</button>
+        <button class="btn-ghost" data-back="2">Back</button>
+      </div>
+
+      <!-- STEP 4a -->
+      <div class="step" data-step="4a">
+        <div class="processing-wrap">
+          <div class="spinner"></div>
+          <h3>Submitting Request…</h3>
+          <p>Please wait while we send your request to our team.</p>
+        </div>
+      </div>
+
+      <!-- STEP 4b -->
+      <div class="step" data-step="4b">
+        <div class="success-wrap">
+          <div class="check-circle"><svg class="check-svg" viewBox="0 0 52 52"><path d="M14 27 L22 35 L38 18" /></svg></div>
+          <h3>Request Submitted</h3>
+          <p>Your withdrawal has been submitted successfully.</p>
+          <div class="success-note">
+            <i class="fas fa-shield-alt"></i>
+            Your withdrawal request will be reviewed by our admin team to verify your trading status. Once approved, your funds will be credited to your selected account within <strong style="color:var(--copper);">24 hours</strong>.
+          </div>
+          <a href="dashboard.html" class="btn btn-primary btn-block" style="margin-top:22px;"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAueqbCcGN_LKDTd6YnPkPcWSIufFqsqwM",
+  authDomain: "fedex-4bdba.firebaseapp.com",
+  projectId: "fedex-4bdba",
+  storageBucket: "fedex-4bdba.firebasestorage.app",
+  messagingSenderId: "770647474446",
+  appId: "1:770647474446:web:8a3a4c595b2286e7ab575f"
+};
+if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const ADMIN_EMAIL = 'avaboremiracle@gmail.com';
+
+let currentUser = null;
+let currentUserData = {};
+let chosenAmount = 0;
+let chosenMethod = null;
+let lastBalance = null;
+
+const fmt = (n)=> '$' + (n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+/* BALANCE COUNT-UP + BUMP */
+function setBalance(n, animate){
+  const el = document.getElementById('balanceVal');
+  if(animate && lastBalance !== null && Math.abs(n - lastBalance) > 0.001){
+    const from = lastBalance, to = n;
+    const start = performance.now();
+    function step(now){
+      const t = Math.min(1, (now - start) / 600);
+      const eased = 1 - Math.pow(1 - t, 3);
+      el.textContent = fmt(from + (to - from) * eased);
+      if(t < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+    el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
+  } else {
+    el.textContent = fmt(n);
+  }
+  lastBalance = n;
+}
+
+auth.onAuthStateChanged(async (user)=>{
+  if(!user){ window.location.href='index.html'; return; }
+  currentUser = user;
+
+  if(user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()){
+    const doc = await db.collection('users').doc(user.uid).get();
+    currentUserData = doc.exists ? doc.data() : { balance: 0 };
+    lastBalance = currentUserData.balance || 0;
+    setBalance(currentUserData.balance || 0, false);
+    return;
+  }
+
+  const doc = await db.collection('users').doc(user.uid).get();
+  if(!doc.exists || doc.data().status !== 'approved'){
+    await auth.signOut();
+    window.location.href='index.html';
+    return;
+  }
+  currentUserData = doc.data();
+  lastBalance = currentUserData.balance || 0;
+  setBalance(currentUserData.balance || 0, false);
+
+  db.collection('users').doc(user.uid).onSnapshot(snap=>{
+    if(!snap.exists) return;
+    currentUserData = snap.data();
+    setBalance(currentUserData.balance || 0, true);
+  });
+});
+
+const steps = document.querySelectorAll('.step');
+const dots = document.querySelectorAll('.step-dot');
+function goStep(n, direction='forward'){
+  steps.forEach(s=>{
+    s.classList.remove('active','slide-back');
+    if(s.dataset.step === String(n)){
+      s.classList.add('active');
+      if(direction === 'back') s.classList.add('slide-back');
+    }
+  });
+  const ps = String(n).startsWith('4') ? 4 : parseInt(n);
+  dots.forEach(d=>{
+    const ds = parseInt(d.dataset.step);
+    d.classList.remove('active','done');
+    if(ds < ps) d.classList.add('done');
+    if(ds === ps) d.classList.add('active');
+  });
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+document.querySelectorAll('[data-back]').forEach(b=>{
+  b.addEventListener('click', ()=> goStep(b.dataset.back, 'back'));
+});
+
+/* STEP 1 */
+const presets = document.getElementById('presets');
+const customAmount = document.getElementById('customAmount');
+const insufficient = document.getElementById('insufficient');
+const insufficientMsg = document.getElementById('insufficientMsg');
+
+presets.addEventListener('click', e=>{
+  const btn = e.target.closest('button[data-amt]');
+  if(!btn) return;
+  presets.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  customAmount.value = btn.dataset.amt;
+  validateAmount();
+});
+customAmount.addEventListener('input', ()=>{
+  presets.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+  validateAmount();
+});
+function validateAmount(){
+  const v = parseFloat(customAmount.value);
+  if(!v || v < 50){ insufficient.classList.remove('show'); return false; }
+  if(v > (currentUserData.balance||0)){
+    insufficientMsg.textContent = `Amount exceeds your available balance (${fmt(currentUserData.balance||0)})`;
+    insufficient.classList.add('show');
+    return false;
+  }
+  insufficient.classList.remove('show');
+  return true;
+}
+document.getElementById('step1Continue').addEventListener('click', ()=>{
+  if(!validateAmount()) return;
+  chosenAmount = parseFloat(customAmount.value);
+  goStep(2);
+});
+
+/* STEP 2 */
+const methodLabels = {
+  bitcoin: 'Bitcoin (BTC)',
+  paypal: 'PayPal',
+  cashapp: 'CashApp',
+  bank: 'Bank Transfer'
+};
+
+document.querySelectorAll('.method-option').forEach(opt=>{
+  opt.addEventListener('click', ()=>{
+    chosenMethod = opt.dataset.method;
+    document.getElementById('detailsTitle').textContent = `Enter ${methodLabels[chosenMethod]} Details`;
+    document.getElementById('detailsSub').textContent = 'Provide the details where you want to receive funds';
+    renderMethodFields();
+    document.getElementById('sumAmount').textContent = fmt(chosenAmount);
+    document.getElementById('sumMethod').textContent = methodLabels[chosenMethod];
+    document.getElementById('sumReceive').textContent = fmt(chosenAmount);
+    goStep(3);
+  });
+});
+
+/* STEP 3 */
+function renderMethodFields(){
+  const container = document.getElementById('methodFields');
+  let html = '';
+  if(chosenMethod === 'bitcoin'){
+    html = `<div class="field"><label>BTC Wallet Address</label><input type="text" id="f_btc_address" placeholder="bc1q..." required /></div>`;
+  } else if(chosenMethod === 'paypal'){
+    html = `<div class="field"><label>PayPal Email</label><input type="email" id="f_pp_email" placeholder="you@example.com" required /></div>`;
+  } else if(chosenMethod === 'cashapp'){
+    html = `<div class="field"><label>$Cashtag</label><input type="text" id="f_ca_tag" placeholder="$yourtag" required /></div>`;
+  } else if(chosenMethod === 'bank'){
+    html = `
+      <div class="field"><label>Account Holder Name</label><input type="text" id="f_bank_name" placeholder="Full name on account" required /></div>
+      <div class="field"><label>Bank Name</label><input type="text" id="f_bank_bank" placeholder="e.g. Chase, Barclays" required /></div>
+      <div class="field"><label>Account Number / IBAN</label><input type="text" id="f_bank_account" placeholder="Your account number" required /></div>
+      <div class="field"><label>Routing / Sort Code</label><input type="text" id="f_bank_routing" placeholder="Routing or sort code" required /></div>
+      <div class="field"><label>Country</label><input type="text" id="f_bank_country" placeholder="e.g. United States" required /></div>
+    `;
+  }
+  container.innerHTML = html;
+}
+
+/* SUBMIT */
+document.getElementById('submitWithdrawal').addEventListener('click', async ()=>{
+  if(!chosenAmount || !chosenMethod) return;
+
+  const details = {};
+  const fields = {
+    bitcoin: [['f_btc_address','address','BTC Address']],
+    paypal: [['f_pp_email','email','PayPal Email']],
+    cashapp: [['f_ca_tag','tag','$Cashtag']],
+    bank: [
+      ['f_bank_name','holder','Account Holder Name'],
+      ['f_bank_bank','bank','Bank Name'],
+      ['f_bank_account','account','Account Number'],
+      ['f_bank_routing','routing','Routing / Sort Code'],
+      ['f_bank_country','country','Country']
+    ]
+  };
+  for(const [id, key, label] of fields[chosenMethod]){
+    const el = document.getElementById(id);
+    const v = (el?.value || '').trim();
+    if(!v){ alert(`Please fill in: ${label}`); return; }
+    details[key] = v;
+  }
+
+  if(chosenAmount > (currentUserData.balance||0)){
+    alert('Your balance changed. Please go back and try again.');
+    return;
+  }
+
+  goStep('4a');
+
+  try {
+    await db.collection('withdrawRequests').add({
+      uid: currentUser.uid,
+      email: currentUser.email,
+      name: currentUserData.name || 'Trader',
+      amount: chosenAmount,
+      method: chosenMethod,
+      methodLabel: methodLabels[chosenMethod],
+      details: details,
+      status: 'pending',
+      requestedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    setTimeout(()=> goStep('4b'), 900);
+  } catch(err){
+    console.error(err);
+    alert('❌ Could not submit: ' + err.message);
+    goStep(3, 'back');
+  }
+});
+</script>
+
+<!--Start of Tawk.to Script-->
+<script type="text/javascript">
+var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+(function(){
+var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+s1.async=true;
+s1.src='https://embed.tawk.to/6aab42073768263445ac02ab/1k2mfjro1';
+s1.charset='UTF-8';
+s1.setAttribute('crossorigin','*');
+s0.parentNode.insertBefore(s1,s0);
+})();
+</script>
+<!--End of Tawk.to Script-->
+</body>
+</html>

@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Express Trade • Admin</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .wrap{max-width:1080px;margin:0 auto;padding:34px 24px;}
+  .header-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:22px;}
+  .header-row h2{font-size:1.7rem;display:flex;align-items:center;gap:10px;}
+  .header-row h2 i{background:var(--panel-2);padding:9px 12px;border-radius:10px;color:var(--copper);font-size:1.1rem;}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px;}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;align-items:center;gap:14px;}
+  .stat i{width:44px;height:44px;border-radius:10px;background:var(--panel-2);display:flex;align-items:center;justify-content:center;color:var(--copper);font-size:1.2rem;flex:none;}
+  .stat .s-label{font-size:.72rem;color:var(--text-faint);text-transform:uppercase;letter-spacing:.4px;}
+  .stat .s-val{font-family:'Fraunces',serif;font-size:1.5rem;}
+  .section-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px;}
+  .user-cell{display:flex;align-items:center;gap:10px;}
+  .avatar{width:34px;height:34px;border-radius:9px;background:var(--panel-2);display:flex;align-items:center;justify-content:center;color:var(--copper);border:1px solid var(--line);font-size:.8rem;flex:none;}
+  .u-email{font-size:.72rem;color:var(--text-faint);}
+  .row-actions{display:flex;gap:6px;flex-wrap:wrap;}
+  .row-actions button{border:1px solid var(--line);background:var(--panel-2);color:var(--text-dim);padding:5px 11px;border-radius:20px;font-size:.7rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:.15s;font-family:inherit;}
+  .row-actions button.approve{background:#0f2420;border-color:#1e4a3f;color:var(--teal);}
+  .row-actions button.block{background:#251616;border-color:#4a2a28;color:var(--rose);}
+  .row-actions button.credit{background:#151d2b;border-color:#263a56;color:#7ea8d8;}
+  .row-actions button.debit{background:#251d15;border-color:#4a3a26;color:var(--copper);}
+  .empty-state{text-align:center;padding:44px 20px;color:var(--text-faint);}
+  .empty-state i{font-size:2.4rem;margin-bottom:12px;display:block;}
+  #loginGate{max-width:380px;margin:80px auto 0;}
+  #loginGate .icon-big{font-size:2.2rem;color:var(--copper);margin-bottom:12px;}
+  #loginGate h2{font-size:1.5rem;margin-bottom:4px;}
+  #loginGate .sub{color:var(--text-faint);font-size:.85rem;margin-bottom:22px;}
+  #loginError{margin-top:14px;padding:10px 14px;border-radius:9px;font-size:.82rem;font-weight:500;display:none;background:#251616;color:var(--rose);border:1px solid #4a2a28;}
+  .logout-pill{background:#251616;border:1px solid #4a2a28;color:var(--rose);padding:7px 14px;border-radius:20px;font-size:.75rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit;}
+  .logout-pill:hover{background:#331d1c;}
+  .back-home-link{text-align:center;margin-top:18px;}
+  .back-home-link a{color:var(--text-faint);text-decoration:none;font-size:.78rem;display:inline-flex;align-items:center;gap:6px;}
+  .back-home-link a:hover{color:var(--copper);}
+  table{min-width:640px;}
+  @media (max-width:720px){.wrap{padding:22px 14px;}.header-row h2{font-size:1.3rem;}.stats{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div id="loginGate" style="min-height:100vh;display:none;align-items:center;justify-content:center;padding:20px;">
+  <div style="width:100%;max-width:380px;">
+    <div class="card">
+      <div class="icon-big"><i class="fas fa-shield-halved"></i></div>
+      <h2>Admin sign in</h2>
+      <p class="sub">Sign in with your Firebase admin account.</p>
+      <form id="loginForm">
+        <div class="field"><label>Email</label><input type="email" id="adminEmail" required /></div>
+        <div class="field"><label>Password</label><input type="password" id="adminPassword" required /></div>
+        <button type="submit" class="btn btn-primary btn-block" id="loginSubmitBtn"><i class="fas fa-lock-open"></i> Sign in</button>
+      </form>
+      <div id="loginError"></div>
+      <div class="back-home-link">
+        <a href="index.html"><i class="fas fa-arrow-left"></i> Back to homepage</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap" id="adminPanel" style="display:none;">
+  <div class="header-row">
+    <h2><i class="fas fa-shield-halved"></i> Admin · Control panel</h2>
+    <button class="logout-pill" id="adminLogoutBtn"><i class="fas fa-arrow-right-from-bracket"></i> Sign out</button>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><i class="fas fa-users"></i><div><div class="s-label">Total users</div><div class="s-val" id="totalUsers">0</div></div></div>
+    <div class="stat"><i class="fas fa-hourglass-half"></i><div><div class="s-label">Pending</div><div class="s-val" id="pendingUsers">0</div></div></div>
+    <div class="stat"><i class="fas fa-dollar-sign"></i><div><div class="s-label">Total balance</div><div class="s-val" id="totalBalance">$0</div></div></div>
+  </div>
+
+  <div class="section-title"><h3 style="font-size:1.15rem;"><i class="fas fa-list-ul" style="color:var(--copper);margin-right:8px;"></i>User management</h3></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>User</th><th>Status</th><th>Balance</th><th>Actions</th></tr></thead>
+      <tbody id="userTableBody"></tbody>
+    </table>
+  </div>
+
+  <div class="section-title" style="margin-top:34px;"><h3 style="font-size:1.15rem;"><i class="fas fa-arrow-down" style="color:var(--copper);margin-right:8px;"></i>Deposit requests</h3></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>User</th><th>Amount</th><th>Wallet</th><th>Requested</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="depositTableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAueqbCcGN_LKDTd6YnPkPcWSIufFqsqwM",
+  authDomain: "fedex-4bdba.firebaseapp.com",
+  projectId: "fedex-4bdba",
+  storageBucket: "fedex-4bdba.firebasestorage.app",
+  messagingSenderId: "770647474446",
+  appId: "1:770647474446:web:8a3a4c595b2286e7ab575f"
+};
+if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const ADMIN_EMAIL = 'avaboremiracle@gmail.com';
+
+// ===== LOGIN =====
+const loginForm = document.getElementById('loginForm');
+const loginError = document.getElementById('loginError');
+const loginBtn = document.getElementById('loginSubmitBtn');
+
+loginForm.addEventListener('submit', async e=>{
+  e.preventDefault();
+  loginError.style.display = 'none';
+  loginBtn.disabled = true;
+  loginBtn.textContent = 'Signing in…';
+
+  const email = document.getElementById('adminEmail').value.trim();
+  const password = document.getElementById('adminPassword').value;
+
+  try {
+    // If someone else is logged in (e.g. a customer), sign them out first
+    if(auth.currentUser){
+      await auth.signOut();
+    }
+
+    const cred = await auth.signInWithEmailAndPassword(email, password);
+
+    if(cred.user.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()){
+      await auth.signOut();
+      loginError.textContent = 'This email is not an admin account.';
+      loginError.style.display = 'block';
+    }
+    // If correct admin, onAuthStateChanged will show the panel automatically
+  } catch(err) {
+    loginError.textContent = (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found')
+      ? 'Incorrect email or password.' : 'Sign-in failed: ' + err.message;
+    loginError.style.display = 'block';
+  } finally {
+    loginBtn.disabled = false;
+    loginBtn.innerHTML = '<i class="fas fa-lock-open"></i> Sign in';
+  }
+});
+
+document.getElementById('adminLogoutBtn').addEventListener('click', async ()=> {
+  await auth.signOut();
+  // Stay on admin page — don't redirect
+  document.getElementById('loginGate').style.display = 'flex';
+  document.getElementById('adminPanel').style.display = 'none';
+  document.getElementById('adminEmail').value = '';
+  document.getElementById('adminPassword').value = '';
+});
+
+let unsubUsers=null, unsubDeposits=null;
+
+auth.onAuthStateChanged(user=>{
+  // Only the admin gets in. Everyone else sees the login gate.
+  // NO REDIRECTS — admin.html stays on admin.html
+  if(user && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()){
+    document.getElementById('loginGate').style.display = 'none';
+    document.getElementById('adminPanel').style.display = 'block';
+    startListeners();
+  } else {
+    if(unsubUsers) unsubUsers();
+    if(unsubDeposits) unsubDeposits();
+    unsubUsers = unsubDeposits = null;
+    document.getElementById('loginGate').style.display = 'flex';
+    document.getElementById('adminPanel').style.display = 'none';
+  }
+});
+
+// ===== REAL-TIME LISTENERS =====
+let usersCache = [];
+let depositsCache = [];
+
+function startListeners(){
+  if(!unsubUsers){
+    unsubUsers = db.collection('users').onSnapshot(snap=>{
+      usersCache = [];
+      snap.forEach(d=> usersCache.push({ id:d.id, ...d.data() }));
+      renderUsers();
+      updateStats();
+    }, err=> console.error(err));
+  }
+  if(!unsubDeposits){
+    unsubDeposits = db.collection('depositRequests').orderBy('requestedAt','desc').onSnapshot(snap=>{
+      depositsCache = [];
+      snap.forEach(d=> depositsCache.push({ id:d.id, ...d.data() }));
+      renderDeposits();
+    }, err=> console.error(err));
+  }
+}
+
+function updateStats(){
+  document.getElementById('totalUsers').textContent = usersCache.length;
+  document.getElementById('pendingUsers').textContent = usersCache.filter(u=>u.status==='pending').length;
+  const tot = usersCache.reduce((s,u)=> s+(u.balance||0), 0);
+  document.getElementById('totalBalance').textContent = '$' + tot.toLocaleString(undefined,{maximumFractionDigits:0});
+}
+
+const toastEl = document.getElementById('toast');
+function toast(msg){
+  toastEl.textContent = msg;
+  toastEl.style.display = 'block';
+  setTimeout(()=> toastEl.style.display='none', 2600);
+}
+
+function renderUsers(){
+  const tbody = document.getElementById('userTableBody');
+  tbody.innerHTML = '';
+  if(usersCache.length === 0){
+    tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><i class="fas fa-user-plus"></i><p>No users yet.</p></div></td></tr>`;
+    return;
+  }
+  usersCache.forEach(u=>{
+    const status = u.status || 'pending';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><div class="user-cell"><div class="avatar"><i class="fas fa-user"></i></div>
+        <div><div>${u.name || 'Unknown'}</div><div class="u-email">${u.email}</div></div></div></td>
+      <td><span class="badge ${status}">${status.charAt(0).toUpperCase()+status.slice(1)}</span></td>
+      <td>$${(u.balance||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td><div class="row-actions">
+        ${status !== 'approved' ? `<button class="approve" data-id="${u.id}" data-act="approve"><i class="fas fa-check"></i> Approve</button>` : ''}
+        ${status !== 'blocked' ? `<button class="block" data-id="${u.id}" data-act="block"><i class="fas fa-ban"></i> Block</button>` : ''}
+        <button class="credit" data-id="${u.id}" data-act="credit"><i class="fas fa-plus"></i> Add</button>
+        <button class="debit" data-id="${u.id}" data-act="debit"><i class="fas fa-minus"></i> Remove</button>
+      </div></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderDeposits(){
+  const tbody = document.getElementById('depositTableBody');
+  tbody.innerHTML = '';
+  if(depositsCache.length === 0){
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><i class="fas fa-inbox"></i><p>No deposit requests yet.</p></div></td></tr>`;
+    return;
+  }
+  depositsCache.forEach(d=>{
+    const status = d.status || 'pending';
+    const when = d.requestedAt?.toDate ? d.requestedAt.toDate().toLocaleString() : '—';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><div class="user-cell"><div class="avatar"><i class="fas fa-user"></i></div>
+        <div><div>${d.name || 'Unknown'}</div><div class="u-email">${d.email}</div></div></div></td>
+      <td>$${Number(d.amount).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td class="u-email">${d.method || 'BTC'} · ${d.wallet || ''}</td>
+      <td class="u-email">${when}</td>
+      <td><span class="badge ${status==='approved'?'approved':status==='declined'?'blocked':'pending'}">${status.charAt(0).toUpperCase()+status.slice(1)}</span></td>
+      <td><div class="row-actions">
+        ${status==='pending' ? `<button class="approve" data-id="${d.id}" data-act="approve-deposit"><i class="fas fa-check"></i> Approve</button>` : ''}
+        ${status==='pending' ? `<button class="block" data-id="${d.id}" data-act="decline-deposit"><i class="fas fa-xmark"></i> Decline</button>` : ''}
+      </div></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// ===== ACTIONS =====
+document.addEventListener('click', async e=>{
+  const btn = e.target.closest('button[data-act]');
+  if(!btn) return;
+  const act = btn.dataset.act;
+  const id = btn.dataset.id;
+
+  try{
+    if(['approve','block','credit','debit'].includes(act)){
+      const user = usersCache.find(u=>u.id===id);
+      if(!user) return;
+      if(act === 'approve'){
+        await db.collection('users').doc(id).update({ status:'approved' });
+        toast(`✅ ${user.name} approved.`);
+      } else if(act === 'block'){
+        await db.collection('users').doc(id).update({ status:'blocked' });
+        toast(`🚫 ${user.name} blocked.`);
+      } else if(act === 'credit'){
+        const amt = Number(prompt(`Add funds to ${user.name} (USD):`, '100'));
+        if(!amt || amt <= 0) return;
+        await db.collection('users').doc(id).update({ balance: firebase.firestore.FieldValue.increment(amt) });
+        toast(`💰 Added $${amt} to ${user.name}.`);
+      } else if(act === 'debit'){
+        const amt = Number(prompt(`Remove funds from ${user.name} (USD):`, '50'));
+        if(!amt || amt <= 0) return;
+        await db.collection('users').doc(id).update({ balance: firebase.firestore.FieldValue.increment(-amt) });
+        toast(`➖ Removed $${amt} from ${user.name}.`);
+      }
+      return;
+    }
+
+    if(act === 'approve-deposit' || act === 'decline-deposit'){
+      const dep = depositsCache.find(d=>d.id===id);
+      if(!dep) return;
+      if(act === 'approve-deposit'){
+        const userRef = db.collection('users').doc(dep.uid);
+        const userSnap = await userRef.get();
+        if(!userSnap.exists){ toast('❌ User not found.'); return; }
+        await userRef.update({ balance: firebase.firestore.FieldValue.increment(Number(dep.amount)) });
+        await db.collection('depositRequests').doc(id).update({ status:'approved', approvedAt: firebase.firestore.FieldValue.serverTimestamp() });
+        toast(`✅ Credited $${dep.amount} to ${dep.name}.`);
+      } else {
+        await db.collection('depositRequests').doc(id).update({ status:'declined' });
+        toast(`🚫 Declined deposit from ${dep.name}.`);
+      }
+      return;
+    }
+  } catch(err){
+    console.error(err);
+    toast('❌ Error: ' + err.message);
+  }
+});
+</script>
+</body>
+</html>

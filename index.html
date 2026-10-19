@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Express Trade • Trade Smarter</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0d12;
+    --panel:#11151c;
+    --panel-2:#161b24;
+    --line:#232a35;
+    --text:#e8ecf3;
+    --text-dim:#9aa4b5;
+    --text-faint:#5f6b7d;
+    --copper:#c9954f;
+    --copper-dim:#8f6a37;
+    --teal:#3fb98f;
+    --rose:#d9705f;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    position:relative;
+    overflow-x:hidden;
+  }
+  body::before{
+    content:'';
+    position:fixed;
+    top:-25%;
+    left:50%;
+    transform:translateX(-50%);
+    width:900px;
+    height:900px;
+    background:radial-gradient(circle,rgba(201,149,79,0.08),transparent 62%);
+    pointer-events:none;
+    z-index:0;
+  }
+
+  /* ========== NAV ========== */
+  .nav{
+    padding:20px 40px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    position:relative;
+    z-index:3;
+    border-bottom:1px solid var(--line);
+    background:rgba(10,13,18,0.85);
+    backdrop-filter:blur(12px);
+    position:sticky;
+    top:0;
+  }
+  .brand{display:flex;align-items:center;gap:11px;}
+  .brand-mark{
+    width:36px;height:36px;border-radius:10px;
+    background:linear-gradient(160deg,var(--copper),var(--copper-dim));
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Fraunces',serif;font-weight:600;font-size:1.05rem;color:#0a0d12;
+    box-shadow:0 4px 14px -4px rgba(201,149,79,0.5);
+  }
+  .brand span{
+    font-family:'Fraunces',serif;font-size:1.15rem;letter-spacing:.1px;font-weight:500;
+  }
+  .nav-links{display:flex;align-items:center;gap:8px;}
+  .nav-links a{
+    color:var(--text-dim);
+    font-size:.85rem;
+    text-decoration:none;
+    padding:8px 16px;
+    border-radius:20px;
+    font-weight:500;
+    transition:.18s;
+  }
+  .nav-links a:hover{color:var(--text);background:var(--panel);}
+  .nav-links a.accent{
+    color:var(--copper);
+    border:1px solid rgba(201,149,79,0.35);
+    background:rgba(201,149,79,0.06);
+  }
+  .nav-links a.accent:hover{
+    background:rgba(201,149,79,0.14);
+    border-color:var(--copper);
+    color:var(--copper);
+  }
+
+  /* ========== LIVE TICKER TAPE ========== */
+  .ticker-strip{
+    background:linear-gradient(180deg,#0f131a,#0a0d12);
+    border-bottom:1px solid var(--line);
+    padding:16px 0;
+    position:relative;
+    z-index:2;
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+  }
+  .ticker-strip::before,
+  .ticker-strip::after{
+    content:'';
+    position:absolute;
+    top:0;
+    bottom:0;
+    width:80px;
+    z-index:3;
+    pointer-events:none;
+  }
+  .ticker-strip::before{
+    left:0;
+    background:linear-gradient(90deg,#0a0d12,rgba(10,13,18,0));
+  }
+  .ticker-strip::after{
+    right:0;
+    background:linear-gradient(270deg,#0a0d12,rgba(10,13,18,0));
+  }
+  .ticker-track{
+    display:flex;
+    gap:60px;
+    animation:tickerScroll 40s linear infinite;
+    white-space:nowrap;
+    width:max-content;
+    padding:0 30px;
+  }
+  .ticker-strip:hover .ticker-track{animation-play-state:paused;}
+  @keyframes tickerScroll{
+    0%{transform:translateX(0);}
+    100%{transform:translateX(-50%);}
+  }
+  .tick{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex:none;
+  }
+  .tick-icon{
+    width:32px;height:32px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex:none;
+    font-size:.95rem;
+  }
+  .tick-icon.gold{background:linear-gradient(160deg,#d4a94a,#8f6a2f);color:#0a0d12;}
+  .tick-icon.btc{background:linear-gradient(160deg,#f7931a,#c46e0f);color:#ffffff;}
+  .tick-icon.eth{background:linear-gradient(160deg,#7b8fd6,#4a5da0);color:#ffffff;}
+  .tick-icon.eur{background:linear-gradient(160deg,#3a6ec9,#1f3f7e);color:#ffffff;font-weight:700;font-size:.72rem;font-family:'Inter',sans-serif;}
+  .tick-icon.gbp{background:linear-gradient(160deg,#8d3a5e,#5a1f3a);color:#ffffff;font-weight:700;font-size:.72rem;font-family:'Inter',sans-serif;}
+  .tick-label{
+    font-size:.95rem;
+    font-weight:600;
+    letter-spacing:-0.1px;
+    color:var(--text);
+  }
+  .tick-label span{
+    color:var(--text-faint);
+    font-weight:400;
+    margin-left:6px;
+    font-size:.78rem;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+  }
+  .tick-live{
+    font-size:.62rem;
+    font-weight:700;
+    color:var(--teal);
+    background:rgba(63,185,143,0.12);
+    padding:3px 9px;
+    border-radius:20px;
+    letter-spacing:.8px;
+    display:flex;
+    align-items:center;
+    gap:5px;
+    margin-left:4px;
+  }
+  .tick-live::before{
+    content:'';
+    width:5px;height:5px;
+    border-radius:50%;
+    background:var(--teal);
+    animation:blink 2s infinite;
+  }
+  @keyframes blink{
+    0%,100%{opacity:1;}
+    50%{opacity:0.35;}
+  }
+  .tick-sep{
+    color:var(--line);
+    font-size:1.3rem;
+    margin-left:14px;
+    user-select:none;
+  }
+
+  /* ========== HERO ========== */
+  main{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:80px 24px 60px;
+    text-align:center;
+    position:relative;
+    z-index:1;
+  }
+  .eyebrow{
+    display:inline-flex;
+    align-items:center;
+    gap:9px;
+    font-size:.7rem;
+    color:var(--copper);
+    letter-spacing:2.5px;
+    text-transform:uppercase;
+    border:1px solid rgba(201,149,79,0.3);
+    background:rgba(201,149,79,0.06);
+    padding:8px 18px;
+    border-radius:20px;
+    margin-bottom:30px;
+    font-weight:600;
+  }
+  .eyebrow .dot{
+    width:6px;height:6px;border-radius:50%;background:var(--teal);
+    box-shadow:0 0 8px rgba(63,185,143,0.7);
+    animation:blink 2s infinite;
+  }
+  h1{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    font-size:clamp(2.2rem,5.5vw,3.8rem);
+    line-height:1.08;
+    letter-spacing:-1.2px;
+    max-width:780px;
+    margin-bottom:22px;
+  }
+  h1 em{font-style:normal;color:var(--copper);}
+  .sub{
+    color:var(--text-dim);
+    font-size:1.05rem;
+    max-width:560px;
+    line-height:1.7;
+    margin-bottom:44px;
+    font-weight:400;
+  }
+  .cta-row{
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
+    justify-content:center;
+    width:100%;
+    max-width:480px;
+  }
+  .cta{
+    flex:1 1 190px;
+    min-width:160px;
+    padding:17px 28px;
+    border-radius:12px;
+    font-weight:600;
+    font-size:.95rem;
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    transition:.22s;
+    border:1px solid transparent;
+    letter-spacing:.1px;
+  }
+  .cta-primary{
+    background:linear-gradient(160deg,var(--copper),var(--copper-dim));
+    color:#0a0d12;
+    box-shadow:0 10px 30px -10px rgba(201,149,79,0.55);
+  }
+  .cta-primary:hover{
+    transform:translateY(-2px);
+    box-shadow:0 14px 38px -10px rgba(201,149,79,0.75);
+  }
+  .cta-ghost{background:transparent;border-color:var(--line);color:var(--text);}
+  .cta-ghost:hover{
+    border-color:var(--copper-dim);
+    background:var(--panel);
+    transform:translateY(-2px);
+  }
+
+  /* ========== TRUST STATS BAR ========== */
+  .trust-bar{
+    width:100%;
+    max-width:1080px;
+    margin:0 auto;
+    padding:0 24px 40px;
+    position:relative;
+    z-index:1;
+  }
+  .trust-inner{
+    background:linear-gradient(180deg,var(--panel),rgba(17,21,28,0.6));
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:26px 28px;
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:20px;
+    position:relative;
+    overflow:hidden;
+  }
+  .trust-inner::before{
+    content:'';
+    position:absolute;
+    top:0;left:0;right:0;
+    height:1px;
+    background:linear-gradient(90deg,transparent,rgba(201,149,79,0.4),transparent);
+  }
+  .trust-item{text-align:center;}
+  .trust-item .tv{
+    font-family:'Fraunces',serif;
+    font-size:1.5rem;
+    font-weight:600;
+    color:var(--text);
+    letter-spacing:-0.5px;
+    margin-bottom:4px;
+  }
+  .trust-item .tv.copper{color:var(--copper);}
+  .trust-item .tl{
+    font-size:.72rem;
+    color:var(--text-faint);
+    text-transform:uppercase;
+    letter-spacing:1.2px;
+    font-weight:500;
+  }
+
+  /* ========== SECTION ========== */
+  .section{
+    width:100%;
+    max-width:1080px;
+    padding:20px 24px 60px;
+    position:relative;
+    z-index:1;
+    margin:0 auto;
+  }
+  .section-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    margin-bottom:22px;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .section-head h2{
+    font-family:'Fraunces',serif;
+    font-size:1.7rem;
+    font-weight:500;
+    letter-spacing:-0.5px;
+  }
+  .section-head h2 small{
+    font-family:'Inter',sans-serif;
+    font-size:.75rem;
+    color:var(--text-faint);
+    font-weight:400;
+    letter-spacing:.3px;
+    text-transform:uppercase;
+    display:block;
+    margin-top:6px;
+  }
+  .section-head .meta{
+    font-size:.75rem;
+    color:var(--text-faint);
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:6px 14px;
+    border:1px solid var(--line);
+    border-radius:20px;
+    background:var(--panel);
+  }
+  .live-dot{
+    width:7px;height:7px;border-radius:50%;
+    background:var(--teal);
+    box-shadow:0 0 0 0 rgba(63,185,143,0.6);
+    animation:pulse 1.8s infinite;
+  }
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(63,185,143,0.6);}
+    70%{box-shadow:0 0 0 10px rgba(63,185,143,0);}
+    100%{box-shadow:0 0 0 0 rgba(63,185,143,0);}
+  }
+
+  /* ========== FOREX CHART CARD ========== */
+  .chart-card{
+    background:linear-gradient(180deg,var(--panel),#0e1219);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:24px 26px;
+    position:relative;
+    overflow:hidden;
+  }
+  .chart-card::before{
+    content:'';
+    position:absolute;
+    top:0;left:0;right:0;
+    height:1px;
+    background:linear-gradient(90deg,transparent,rgba(201,149,79,0.35),transparent);
+  }
+  .chart-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:18px;
+    flex-wrap:wrap;
+    gap:16px;
+  }
+  .chart-pair{
+    display:flex;
+    align-items:center;
+    gap:14px;
+  }
+  .chart-pair-icon{
+    width:44px;height:44px;
+    border-radius:11px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:1.15rem;
+    background:linear-gradient(160deg,#d4a94a,#8f6a2f);
+    color:#0a0d12;
+    box-shadow:0 8px 24px -8px rgba(212,169,74,0.5);
+    flex:none;
+  }
+  .chart-pair .name{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    font-size:1.15rem;
+    letter-spacing:-0.3px;
+  }
+  .chart-pair .name span{
+    color:var(--text-faint);
+    font-family:'Inter',sans-serif;
+    font-weight:400;
+    font-size:.78rem;
+    margin-left:8px;
+  }
+  .chart-pair .sub{
+    font-size:.72rem;
+    color:var(--text-faint);
+    margin-top:4px;
+    letter-spacing:.2px;
+  }
+
+  #forexChart{
+    width:100%;
+    height:240px;
+    display:block;
+  }
+
+  /* ========== MARKET GRID ========== */
+  .market-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+    gap:16px;
+  }
+  .pair-card{
+    background:linear-gradient(180deg,var(--panel),#0e1219);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:24px 26px;
+    transition:.22s;
+    position:relative;
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+    gap:18px;
+  }
+  .pair-card::before{
+    content:'';
+    position:absolute;
+    top:0;left:0;right:0;
+    height:1px;
+    background:linear-gradient(90deg,transparent,rgba(201,149,79,0.3),transparent);
+    opacity:0;
+    transition:.22s;
+  }
+  .pair-card:hover{
+    border-color:var(--copper-dim);
+    transform:translateY(-3px);
+    box-shadow:0 16px 40px -16px rgba(201,149,79,0.22);
+  }
+  .pair-card:hover::before{opacity:1;}
+  .pair-icon{
+    width:52px;height:52px;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:1.35rem;
+    flex:none;
+    font-weight:700;
+    font-family:'Inter',sans-serif;
+  }
+  .pair-icon.gold{
+    background:linear-gradient(160deg,#d4a94a,#8f6a2f);
+    color:#0a0d12;
+    box-shadow:0 8px 24px -8px rgba(212,169,74,0.5);
+    font-size:1.3rem;
+  }
+  .pair-icon.btc{
+    background:linear-gradient(160deg,#f7931a,#c46e0f);
+    color:#ffffff;
+    box-shadow:0 8px 24px -8px rgba(247,147,26,0.5);
+    font-size:1.35rem;
+  }
+  .pair-icon.eth{
+    background:linear-gradient(160deg,#7b8fd6,#4a5da0);
+    color:#ffffff;
+    box-shadow:0 8px 24px -8px rgba(123,143,214,0.5);
+    font-size:1.35rem;
+  }
+  .pair-icon.eur{
+    background:linear-gradient(160deg,#3a6ec9,#1f3f7e);
+    color:#ffffff;
+    box-shadow:0 8px 24px -8px rgba(58,110,201,0.5);
+    font-size:.95rem;
+    letter-spacing:-0.5px;
+  }
+  .pair-icon.gbp{
+    background:linear-gradient(160deg,#8d3a5e,#5a1f3a);
+    color:#ffffff;
+    box-shadow:0 8px 24px -8px rgba(141,58,94,0.5);
+    font-size:.95rem;
+    letter-spacing:-0.5px;
+  }
+  .pair-info{flex:1;min-width:0;}
+  .pair-name{
+    font-family:'Fraunces',serif;
+    font-size:1.15rem;
+    font-weight:500;
+    letter-spacing:-0.2px;
+    margin-bottom:4px;
+  }
+  .pair-name span{
+    color:var(--text-faint);
+    font-family:'Inter',sans-serif;
+    font-weight:400;
+    font-size:.78rem;
+    margin-left:8px;
+  }
+  .pair-desc{
+    font-size:.78rem;
+    color:var(--text-faint);
+    letter-spacing:.2px;
+  }
+  .pair-status{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:.65rem;
+    font-weight:700;
+    color:var(--teal);
+    background:rgba(63,185,143,0.12);
+    padding:4px 10px;
+    border-radius:20px;
+    letter-spacing:.8px;
+    align-self:flex-start;
+  }
+  .pair-status::before{
+    content:'';
+    width:5px;height:5px;
+    border-radius:50%;
+    background:var(--teal);
+    animation:blink 2s infinite;
+  }
+
+  /* ========== FEATURES ========== */
+  .features{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:16px;
+    max-width:1080px;
+    width:100%;
+    margin:0 auto;
+    padding:0 24px 80px;
+    position:relative;
+    z-index:1;
+  }
+  .feat{
+    background:linear-gradient(180deg,var(--panel),#0e1219);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:26px 24px;
+    transition:.2s;
+    position:relative;
+    overflow:hidden;
+  }
+  .feat::before{
+    content:'';
+    position:absolute;
+    top:0;left:0;right:0;
+    height:1px;
+    background:linear-gradient(90deg,transparent,rgba(201,149,79,0.3),transparent);
+  }
+  .feat:hover{
+    border-color:var(--copper-dim);
+    transform:translateY(-3px);
+    box-shadow:0 16px 40px -16px rgba(201,149,79,0.2);
+  }
+  .feat .feat-icon{
+    width:42px;height:42px;border-radius:11px;
+    background:rgba(201,149,79,0.08);
+    border:1px solid rgba(201,149,79,0.22);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--copper);
+    font-size:1.05rem;
+    margin-bottom:16px;
+  }
+  .feat h4{font-size:.95rem;font-weight:600;margin-bottom:8px;letter-spacing:-0.1px;}
+  .feat p{font-size:.82rem;color:var(--text-faint);line-height:1.65;}
+
+  /* ========== FOOTER ========== */
+  footer{
+    border-top:1px solid var(--line);
+    padding:36px 24px 30px;
+    position:relative;
+    z-index:1;
+    background:linear-gradient(180deg,transparent,rgba(15,19,26,0.5));
+  }
+  .footer-inner{
+    max-width:1080px;
+    margin:0 auto;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:16px;
+  }
+  .footer-brand{display:flex;align-items:center;gap:10px;}
+  .footer-brand .brand-mark{
+    width:28px;height:28px;
+    border-radius:8px;
+    font-size:.8rem;
+  }
+  .footer-brand span{
+    font-family:'Fraunces',serif;
+    font-size:.95rem;
+    color:var(--text-dim);
+  }
+  .footer-links{display:flex;gap:24px;flex-wrap:wrap;}
+  .footer-links a{
+    color:var(--text-faint);
+    font-size:.78rem;
+    text-decoration:none;
+    transition:.15s;
+  }
+  .footer-links a:hover{color:var(--copper);}
+  .footer-copy{
+    font-size:.72rem;
+    color:var(--text-faint);
+    letter-spacing:.2px;
+  }
+
+  @media (max-width:900px){
+    .trust-inner{grid-template-columns:repeat(2,1fr);gap:24px;}
+    .features{grid-template-columns:1fr;}
+  }
+  @media (max-width:640px){
+    .nav{padding:16px 20px;}
+    .nav-links a{padding:6px 12px;font-size:.78rem;}
+    h1{letter-spacing:-0.8px;}
+    main{padding:60px 20px 40px;}
+    .sub{font-size:.95rem;}
+    .section{padding:16px 18px 40px;}
+    .section-head h2{font-size:1.4rem;}
+    .trust-inner{padding:22px 20px;}
+    .trust-item .tv{font-size:1.25rem;}
+    .footer-inner{flex-direction:column;text-align:center;gap:20px;}
+    .footer-links{justify-content:center;}
+    .ticker-track{gap:40px;}
+    .tick-label{font-size:.85rem;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ========== NAV ========== -->
+<div class="nav">
+  <div class="brand">
+    <div class="brand-mark">E</div>
+    <span>Express Trade</span>
+  </div>
+  <div class="nav-links">
+    <a href="auth.html#login">Login</a>
+    <a href="auth.html#signup" class="accent">Sign Up</a>
+  </div>
+</div>
+
+<!-- ========== LIVE TICKER TAPE ========== -->
+<div class="ticker-strip">
+  <div class="ticker-track" id="tickerTrack">
+    <!-- filled by JS -->
+  </div>
+</div>
+
+<!-- ========== HERO ========== -->
+<main>
+  <div class="eyebrow">
+    <span class="dot"></span> Trusted Trading Platform
+  </div>
+
+  <h1>Trade forex and crypto <em>in one place</em></h1>
+
+  <p class="sub">
+    Real-time forex and crypto markets, secure deposits, and a clean trading experience — all in one platform.
+  </p>
+
+  <div class="cta-row">
+    <a href="auth.html#signup" class="cta cta-primary">
+      <i class="fas fa-user-plus"></i> Create Account
+    </a>
+    <a href="auth.html#login" class="cta cta-ghost">
+      <i class="fas fa-arrow-right-to-bracket"></i> Sign In
+    </a>
+  </div>
+</main>
+
+<!-- ========== TRUST BAR ========== -->
+<div class="trust-bar">
+  <div class="trust-inner">
+    <div class="trust-item">
+      <div class="tv">24/7</div>
+      <div class="tl">Market Access</div>
+    </div>
+    <div class="trust-item">
+      <div class="tv copper">Forex · Crypto</div>
+      <div class="tl">Live Pairs</div>
+    </div>
+    <div class="trust-item">
+      <div class="tv">0.00%</div>
+      <div class="tl">Deposit Fees</div>
+    </div>
+    <div class="trust-item">
+      <div class="tv">Instant</div>
+      <div class="tl">Order Execution</div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== XAU/USD LIVE CHART ========== -->
+<div class="section">
+  <div class="section-head">
+    <h2>XAU/USD · Live Chart <small>Gold Spot · Streaming Market</small></h2>
+    <div class="meta"><span class="live-dot"></span> Live market feed</div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-head">
+      <div class="chart-pair">
+        <div class="chart-pair-icon"><i class="fas fa-coins"></i></div>
+        <div>
+          <div class="name">Gold Spot <span>XAU / USD</span></div>
+          <div class="sub" id="chartUpdated">—</div>
+        </div>
+      </div>
+    </div>
+
+    <canvas id="forexChart"></canvas>
+  </div>
+</div>
+
+<!-- ========== LIVE MARKETS ========== -->
+<div class="section">
+  <div class="section-head">
+    <h2>Markets <small>Live Tradeable Pairs</small></h2>
+    <div class="meta"><span class="live-dot"></span> Streaming live</div>
+  </div>
+
+  <div class="market-grid">
+
+    <!-- XAU/USD -->
+    <div class="pair-card">
+      <div class="pair-icon gold"><i class="fas fa-coins"></i></div>
+      <div class="pair-info">
+        <div class="pair-name">XAU/USD <span>Gold Spot</span></div>
+        <div class="pair-desc">Precious Metal · USD-denominated</div>
+      </div>
+      <div class="pair-status">LIVE</div>
+    </div>
+
+    <!-- EUR/USD -->
+    <div class="pair-card">
+      <div class="pair-icon eur">EUR</div>
+      <div class="pair-info">
+        <div class="pair-name">EUR/USD <span>Euro</span></div>
+        <div class="pair-desc">Major Forex · USD-denominated</div>
+      </div>
+      <div class="pair-status">LIVE</div>
+    </div>
+
+    <!-- GBP/USD -->
+    <div class="pair-card">
+      <div class="pair-icon gbp">GBP</div>
+      <div class="pair-info">
+        <div class="pair-name">GBP/USD <span>British Pound</span></div>
+        <div class="pair-desc">Major Forex · USD-denominated</div>
+      </div>
+      <div class="pair-status">LIVE</div>
+    </div>
+
+    <!-- BTC/USD -->
+    <div class="pair-card">
+      <div class="pair-icon btc"><i class="fab fa-bitcoin"></i></div>
+      <div class="pair-info">
+        <div class="pair-name">BTC/USD <span>Bitcoin</span></div>
+        <div class="pair-desc">Digital Asset · USD-denominated</div>
+      </div>
+      <div class="pair-status">LIVE</div>
+    </div>
+
+    <!-- ETH/USD -->
+    <div class="pair-card">
+      <div class="pair-icon eth"><i class="fab fa-ethereum"></i></div>
+      <div class="pair-info">
+        <div class="pair-name">ETH/USD <span>Ethereum</span></div>
+        <div class="pair-desc">Digital Asset · USD-denominated</div>
+      </div>
+      <div class="pair-status">LIVE</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ========== FEATURES ========== -->
+<div class="features">
+  <div class="feat">
+    <div class="feat-icon"><i class="fas fa-bolt"></i></div>
+    <h4>Instant Execution</h4>
+    <p>Place orders on forex and crypto with real-time market data feeds and fast settlement.</p>
+  </div>
+  <div class="feat">
+    <div class="feat-icon"><i class="fas fa-shield-alt"></i></div>
+    <h4>Verified Accounts</h4>
+    <p>Every new account is manually reviewed and approved by our team to keep the platform secure.</p>
+  </div>
+  <div class="feat">
+    <div class="feat-icon"><i class="fas fa-chart-line"></i></div>
+    <h4>Real-Time Markets</h4>
+    <p>Track live price movement with streaming market data and continuous portfolio valuation.</p>
+  </div>
+</div>
+
+<!-- ========== FOOTER ========== -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="brand-mark">E</div>
+      <span>Express Trade</span>
+    </div>
+    <div class="footer-links">
+      <a href="#">Terms</a>
+      <a href="#">Privacy</a>
+      <a href="#">Support</a>
+    </div>
+    <div class="footer-copy">© <span id="year"></span> Express Trade · All rights reserved</div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  // ============================================================
+  //  TICKER TAPE  (5 pairs — infinite scrolling marquee)
+  // ============================================================
+  const PAIRS = [
+    { code:'XAU/USD', label:'Gold Spot',    iconClass:'gold', iconFA:'fa-coins',    isBrand:false },
+    { code:'EUR/USD', label:'Euro',         iconClass:'eur',  iconText:'EUR',       isBrand:false },
+    { code:'GBP/USD', label:'British Pound',iconClass:'gbp',  iconText:'GBP',       isBrand:false },
+    { code:'BTC/USD', label:'Bitcoin',      iconClass:'btc',  iconFA:'fa-bitcoin',  isBrand:true  },
+    { code:'ETH/USD', label:'Ethereum',     iconClass:'eth',  iconFA:'fa-ethereum', isBrand:true  }
+  ];
+
+  const tickerTrack = document.getElementById('tickerTrack');
+
+  function tickerIcon(p){
+    if(p.isBrand)  return `<i class="fab ${p.iconFA}"></i>`;
+    if(p.iconText) return p.iconText;
+    return `<i class="fas ${p.iconFA}"></i>`;
+  }
+
+  function tickerItem(p){
+    return `
+      <div class="tick">
+        <div class="tick-icon ${p.iconClass}">${tickerIcon(p)}</div>
+        <div class="tick-label">${p.code}<span>${p.label}</span></div>
+        <div class="tick-live">LIVE</div>
+        <span class="tick-sep">•</span>
+      </div>
+    `;
+  }
+
+  function renderTicker(){
+    const items = PAIRS.map(tickerItem).join('');
+    tickerTrack.innerHTML = items + items + items;
+  }
+
+  // ============================================================
+  //  XAU/USD LIVE CHART  (simulated — pure JS, no price shown)
+  // ============================================================
+  const canvas = document.getElementById('forexChart');
+  const ctx = canvas.getContext('2d');
+  const HIST_POINTS = 60;
+  let goldHistory = [];
+
+  let goldPrice = 2650 + (Math.random() * 30 - 15);
+
+  function seedChartData(){
+    goldHistory = [];
+    let p = goldPrice * (0.997 + Math.random()*0.006);
+    for(let i=0; i<HIST_POINTS; i++){
+      p += (Math.random() - 0.48) * p * 0.0009;
+      goldHistory.push(Math.max(p, 0.01));
+    }
+    goldHistory[goldHistory.length - 1] = goldPrice;
+  }
+
+  function resizeCanvas(){
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width  = canvas.clientWidth  * dpr;
+    canvas.height = canvas.clientHeight * dpr;
+  }
+
+  function drawChart(){
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0,0,w,h);
+
+    if(!goldHistory.length) return;
+
+    const min = Math.min(...goldHistory);
+    const max = Math.max(...goldHistory);
+    const range = (max - min) || 1;
+    const padTop = 16*dpr, padBot = 16*dpr, padLeft = 6*dpr, padRight = 6*dpr;
+    const chartH = h - padTop - padBot;
+    const chartW = w - padLeft - padRight;
+
+    const isUp = goldHistory[goldHistory.length-1] >= goldHistory[0];
+    const lineColor = isUp ? '#3fb98f' : '#d9705f';
+
+    const pts = goldHistory.map((p,i)=>{
+      const x = padLeft + (i/(goldHistory.length-1 || 1)) * chartW;
+      const y = padTop + chartH - ((p-min)/range) * chartH;
+      return [x,y];
+    });
+
+    const grad = ctx.createLinearGradient(0, 0, 0, h);
+    if(isUp){
+      grad.addColorStop(0, 'rgba(63,185,143,0.32)');
+      grad.addColorStop(1, 'rgba(63,185,143,0)');
+    } else {
+      grad.addColorStop(0, 'rgba(217,112,95,0.32)');
+      grad.addColorStop(1, 'rgba(217,112,95,0)');
+    }
+
+    ctx.beginPath();
+    pts.forEach(([x,y], i)=> i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y));
+    ctx.lineTo(pts[pts.length-1][0], h - padBot);
+    ctx.lineTo(pts[0][0], h - padBot);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    ctx.beginPath();
+    pts.forEach(([x,y], i)=> i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y));
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = 2 * dpr;
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+
+    const [lx, ly] = pts[pts.length-1];
+    ctx.beginPath();
+    ctx.arc(lx, ly, 3.5*dpr, 0, Math.PI*2);
+    ctx.fillStyle = lineColor;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(lx, ly, 8*dpr, 0, Math.PI*2);
+    ctx.fillStyle = isUp ? 'rgba(63,185,143,0.22)' : 'rgba(217,112,95,0.22)';
+    ctx.fill();
+  }
+
+  function updateChartTime(){
+    document.getElementById('chartUpdated').textContent =
+      'Updated ' + new Date().toLocaleTimeString('en-US', {
+        timeZone: 'America/New_York',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      }) + ' ET';
+  }
+
+  function tickGold(){
+    const drift = (Math.random() - 0.5) * goldPrice * 0.0006;
+    goldPrice = Math.max(goldPrice + drift, 0.01);
+    updateChartTime();
+  }
+
+  function pushChartPoint(){
+    goldHistory.push(goldPrice);
+    if(goldHistory.length > HIST_POINTS) goldHistory.shift();
+    drawChart();
+  }
+
+  // ============================================================
+  //  BOOT
+  // ============================================================
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  renderTicker();
+
+  seedChartData();
+  resizeCanvas();
+  drawChart();
+  updateChartTime();
+
+  window.addEventListener('resize', ()=>{
+    resizeCanvas();
+    drawChart();
+  });
+
+  setInterval(tickGold, 3000);
+  setInterval(pushChartPoint, 4000);
+
+})();
+</script>
+
+<!--Start of Tawk.to Script-->
+<script type="text/javascript">
+var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+(function(){
+var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+s1.async=true;
+s1.src='https://embed.tawk.to/6aab42073768263445ac02ab/1k2mfjro1';
+s1.charset='UTF-8';
+s1.setAttribute('crossorigin','*');
+s0.parentNode.insertBefore(s1,s0);
+})();
+</script>
+<!--End of Tawk.to Script-->
+
+</body>
+</html>

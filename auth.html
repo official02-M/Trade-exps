@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sign In • Express Trade</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .auth-shell{min-height:100vh;width:100%;display:flex;align-items:center;justify-content:center;padding:24px;}
+  .auth-card{max-width:420px;width:100%;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:34px 30px;}
+  .auth-head{text-align:center;margin-bottom:26px;}
+  .auth-head .brand-mark{
+    width:48px;height:48px;border-radius:12px;
+    background:linear-gradient(160deg,var(--copper),var(--copper-dim));
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Fraunces',serif;font-weight:600;font-size:1.4rem;color:#0a0d12;
+    margin:0 auto 16px;
+  }
+  .auth-head h1{font-family:'Fraunces',serif;font-size:1.6rem;font-weight:500;letter-spacing:-0.4px;margin-bottom:6px;}
+  .auth-head p{color:var(--text-faint);font-size:.85rem;}
+  .tab-switch{display:flex;gap:8px;background:var(--panel-2);border-radius:12px;padding:6px;margin-bottom:22px;border:1px solid var(--line);}
+  .tab-switch button{
+    flex:1;padding:10px;border:none;border-radius:9px;font-weight:600;font-size:.85rem;
+    cursor:pointer;background:transparent;color:var(--text-dim);transition:.2s;font-family:inherit;
+  }
+  .tab-switch button.active{background:var(--copper);color:#0a0d12;box-shadow:0 4px 14px -6px rgba(201,149,79,0.6);}
+  .form-group{margin-bottom:16px;}
+  .form-group label{display:block;font-size:.78rem;color:var(--text-dim);margin-bottom:6px;font-weight:500;}
+  .form-group input{
+    width:100%;padding:13px 16px;background:var(--panel-2);border:1px solid var(--line);
+    border-radius:10px;color:var(--text);font-size:.9rem;outline:none;font-family:inherit;transition:.18s;
+  }
+  .form-group input:focus{border-color:var(--copper-dim);box-shadow:0 0 0 3px rgba(201,149,79,0.1);}
+  .form-group input::placeholder{color:var(--text-faint);}
+  .submit-btn{
+    width:100%;padding:14px;border:none;border-radius:12px;
+    background:linear-gradient(160deg,var(--copper),var(--copper-dim));
+    color:#0a0d12;font-weight:600;font-size:.9rem;cursor:pointer;font-family:inherit;margin-top:6px;
+    transition:.2s;display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .submit-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 12px 30px -10px rgba(201,149,79,0.7);}
+  .submit-btn:disabled{opacity:0.5;cursor:not-allowed;}
+  .message-box{margin-top:16px;padding:12px 16px;border-radius:10px;font-size:.83rem;line-height:1.55;display:none;text-align:center;}
+  .message-box.show{display:block;}
+  .message-box.success{background:#0f2420;color:var(--teal);border:1px solid #1e4a3f;}
+  .message-box.error{background:#251616;color:var(--rose);border:1px solid #4a2a28;}
+  .message-box.info{background:#1a2233;color:#6ea8fe;border:1px solid #2c4066;}
+  .hidden{display:none !important;}
+  .switch-hint{text-align:center;font-size:.78rem;color:var(--text-faint);margin-top:20px;}
+  .switch-hint a{color:var(--copper);text-decoration:none;font-weight:500;}
+  .back-home{text-align:center;margin-top:22px;}
+  .back-home a{color:var(--text-faint);text-decoration:none;font-size:.8rem;display:inline-flex;align-items:center;gap:6px;}
+  .back-home a:hover{color:var(--copper);}
+</style>
+</head>
+<body>
+
+<div class="auth-shell">
+  <div class="auth-card">
+    <div class="auth-head">
+      <div class="brand-mark">E</div>
+      <h1 id="headTitle">Welcome Back</h1>
+      <p id="headSub">Sign in to your Express Trade account</p>
+    </div>
+
+    <div class="tab-switch">
+      <button class="active" id="tabLogin" type="button">Login</button>
+      <button id="tabSignup" type="button">Sign Up</button>
+    </div>
+
+    <form id="loginForm">
+      <div class="form-group">
+        <label><i class="fas fa-envelope"></i> Email</label>
+        <input type="email" id="loginEmail" placeholder="you@example.com" required />
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-lock"></i> Password</label>
+        <input type="password" id="loginPassword" placeholder="Your password" required />
+      </div>
+      <button type="submit" class="submit-btn" id="loginBtn">
+        <i class="fas fa-arrow-right-to-bracket"></i> Sign In
+      </button>
+    </form>
+
+    <form id="signupForm" class="hidden">
+      <div class="form-group">
+        <label><i class="fas fa-user"></i> Full Name</label>
+        <input type="text" id="signupName" placeholder="John Doe" required />
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-envelope"></i> Email</label>
+        <input type="email" id="signupEmail" placeholder="you@example.com" required />
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-lock"></i> Password</label>
+        <input type="password" id="signupPassword" placeholder="At least 6 characters" required minlength="6" />
+      </div>
+      <button type="submit" class="submit-btn" id="signupBtn">
+        <i class="fas fa-user-plus"></i> Create Account
+      </button>
+    </form>
+
+    <div class="message-box" id="messageBox"></div>
+
+    <div class="switch-hint" id="switchHint">
+      Don't have an account? <a href="#" id="switchToSignup">Sign up</a>
+    </div>
+
+    <div class="back-home">
+      <a href="index.html"><i class="fas fa-arrow-left"></i> Back to homepage</a>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAueqbCcGN_LKDTd6YnPkPcWSIufFqsqwM",
+  authDomain: "fedex-4bdba.firebaseapp.com",
+  projectId: "fedex-4bdba",
+  storageBucket: "fedex-4bdba.firebasestorage.app",
+  messagingSenderId: "770647474446",
+  appId: "1:770647474446:web:8a3a4c595b2286e7ab575f"
+};
+if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const ADMIN_EMAIL = 'avaboremiracle@gmail.com';
+</script>
+
+<script>
+(function(){
+  const loginForm = document.getElementById('loginForm');
+  const signupForm = document.getElementById('signupForm');
+  const tabLogin = document.getElementById('tabLogin');
+  const tabSignup = document.getElementById('tabSignup');
+  const messageBox = document.getElementById('messageBox');
+  const headTitle = document.getElementById('headTitle');
+  const headSub = document.getElementById('headSub');
+  const switchHint = document.getElementById('switchHint');
+
+  function showMessage(text, type='info'){
+    messageBox.className = 'message-box show ' + type;
+    messageBox.innerHTML = text;
+  }
+  function hideMessage(){
+    messageBox.className = 'message-box';
+    messageBox.innerHTML = '';
+  }
+
+  function showLogin(){
+    tabLogin.classList.add('active');
+    tabSignup.classList.remove('active');
+    loginForm.classList.remove('hidden');
+    signupForm.classList.add('hidden');
+    headTitle.textContent = 'Welcome Back';
+    headSub.textContent = 'Sign in to your Express Trade account';
+    switchHint.innerHTML = `Don't have an account? <a href="#" id="switchToSignup">Sign up</a>`;
+    document.getElementById('switchToSignup').addEventListener('click',(e)=>{e.preventDefault();showSignup();});
+    hideMessage();
+  }
+  function showSignup(){
+    tabSignup.classList.add('active');
+    tabLogin.classList.remove('active');
+    signupForm.classList.remove('hidden');
+    loginForm.classList.add('hidden');
+    headTitle.textContent = 'Create Account';
+    headSub.textContent = 'Join Express Trade in less than a minute';
+    switchHint.innerHTML = `Already have an account? <a href="#" id="switchToLogin">Sign in</a>`;
+    document.getElementById('switchToLogin').addEventListener('click',(e)=>{e.preventDefault();showLogin();});
+    hideMessage();
+  }
+
+  tabLogin.addEventListener('click', showLogin);
+  tabSignup.addEventListener('click', showSignup);
+  document.getElementById('switchToSignup').addEventListener('click',(e)=>{e.preventDefault();showSignup();});
+
+  // ============================================================
+  //  SIGNUP
+  // ============================================================
+  signupForm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const name = document.getElementById('signupName').value.trim();
+    const email = document.getElementById('signupEmail').value.trim();
+    const password = document.getElementById('signupPassword').value;
+
+    if(!name || !email || !password){ showMessage('Please fill in all fields.','error'); return; }
+    if(password.length < 6){ showMessage('Password must be at least 6 characters.','error'); return; }
+
+    const btn = document.getElementById('signupBtn');
+    btn.disabled = true;
+    showMessage('<i class="fas fa-spinner fa-spin"></i> Creating your account...','info');
+
+    try{
+      // If someone is already logged in (e.g. admin), sign them out first
+      if(auth.currentUser) await auth.signOut();
+
+      const cred = await auth.createUserWithEmailAndPassword(email, password);
+
+      await db.collection('users').doc(cred.user.uid).set({
+        name: name,
+        email: email,
+        balance: 0,
+        btc: 0,
+        eth: 0,
+        xau: 0,
+        status: 'pending',
+        tradingProgress: 0,
+        signalStrength: 0,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      await auth.signOut();
+
+      showMessage('✅ Account created! Waiting for admin approval.','success');
+      signupForm.reset();
+
+      setTimeout(()=>{
+        showLogin();
+        showMessage('📝 Please sign in after admin approves your account.','info');
+      }, 2200);
+
+    }catch(err){
+      console.error(err);
+      let msg = 'Signup failed. Please try again.';
+      if(err.code === 'auth/email-already-in-use') msg = 'This email is already registered.';
+      if(err.code === 'auth/invalid-email') msg = 'Please enter a valid email.';
+      if(err.code === 'auth/weak-password') msg = 'Password is too weak (min 6 characters).';
+      showMessage('❌ ' + msg,'error');
+    }finally{
+      btn.disabled = false;
+    }
+  });
+
+  // ============================================================
+  //  LOGIN
+  // ============================================================
+  loginForm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+
+    if(!email || !password){ showMessage('Please enter email and password.','error'); return; }
+
+    const btn = document.getElementById('loginBtn');
+    btn.disabled = true;
+    showMessage('<i class="fas fa-spinner fa-spin"></i> Signing in...','info');
+
+    try{
+      // If someone else is logged in, sign them out first
+      if(auth.currentUser) await auth.signOut();
+
+      const cred = await auth.signInWithEmailAndPassword(email, password);
+
+      // Admin
+      if(cred.user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()){
+        showMessage('✅ Admin login successful. Redirecting...','success');
+        setTimeout(()=>{ window.location.href = 'admin.html'; }, 1200);
+        return;
+      }
+
+      // Regular user → check Firestore
+      const doc = await db.collection('users').doc(cred.user.uid).get();
+
+      if(!doc.exists){
+        await auth.signOut();
+        showMessage('❌ Account record not found. Contact support.','error');
+        btn.disabled = false;
+        return;
+      }
+
+      const data = doc.data();
+
+      if(data.status === 'blocked'){
+        await auth.signOut();
+        showMessage('🚫 Your account has been blocked. Contact support.','error');
+        btn.disabled = false;
+        return;
+      }
+
+      if(data.status === 'pending'){
+        await auth.signOut();
+        showMessage('⏳ Your account is pending admin approval.<br>Please check back later.','info');
+        btn.disabled = false;
+        return;
+      }
+
+      showMessage('✅ Welcome back! Redirecting...','success');
+      setTimeout(()=>{ window.location.href = 'dashboard.html'; }, 1000);
+
+    }catch(err){
+      console.error(err);
+      let msg = 'Login failed.';
+      if(err.code === 'auth/user-not-found') msg = 'No account found with this email.';
+      if(err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') msg = 'Incorrect email or password.';
+      if(err.code === 'auth/too-many-requests') msg = 'Too many attempts. Try again later.';
+      showMessage('❌ ' + msg,'error');
+      btn.disabled = false;
+    }
+  });
+
+  // ============================================================
+  //  NO AUTO-REDIRECT
+  //  The page always shows the login/signup form.
+  //  Redirects only happen AFTER a successful login/signup.
+  // ============================================================
+
+})();
+</script>
+
+</body>
+</html>

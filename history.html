@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Transaction History • Express Trade</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .wrap{max-width:820px;margin:0 auto;padding:26px 22px 60px;}
+  .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;gap:12px;flex-wrap:wrap;}
+  .back-link{display:inline-flex;align-items:center;gap:8px;color:var(--text-dim);text-decoration:none;font-size:.85rem;font-weight:500;transition:.15s;}
+  .back-link:hover{color:var(--copper);}
+  .top h1{font-family:'Fraunces',serif;font-size:1.6rem;font-weight:500;letter-spacing:-.4px;}
+  .top .sub{font-size:.78rem;color:var(--text-faint);margin-top:4px;}
+
+  .filters{display:flex;gap:8px;margin-bottom:22px;flex-wrap:wrap;}
+  .filter{background:var(--panel);border:1px solid var(--line);color:var(--text-dim);padding:8px 16px;border-radius:20px;font-size:.78rem;font-weight:600;cursor:pointer;transition:.15s;font-family:inherit;display:flex;align-items:center;gap:8px;}
+  .filter:hover{border-color:var(--copper-dim);color:var(--text);}
+  .filter.active{border-color:var(--copper);background:rgba(201,149,79,0.1);color:var(--copper);}
+  .filter i{font-size:.72rem;}
+
+  .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;}
+  @media (max-width:560px){.stats-grid{grid-template-columns:1fr;}}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;}
+  .stat .s-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;color:var(--text-faint);margin-bottom:6px;font-weight:600;}
+  .stat .s-val{font-family:'Fraunces',serif;font-size:1.3rem;font-weight:600;}
+  .stat .s-val.up{color:var(--teal);}
+  .stat .s-val.down{color:var(--rose);}
+
+  .history-list{display:flex;flex-direction:column;gap:10px;}
+
+  .tx-card{
+    display:flex;align-items:center;gap:14px;
+    background:linear-gradient(180deg,var(--panel),#0e1219);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:16px 18px;
+    transition:.2s;
+    animation:fadeUp .4s ease;
+  }
+  @keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+  .tx-card:hover{border-color:var(--copper-dim);}
+
+  .tx-icon{
+    width:44px;height:44px;border-radius:12px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:1.05rem;flex:none;
+    background:rgba(201,149,79,0.1);color:var(--copper);
+    border:1px solid rgba(201,149,79,0.22);
+  }
+  .tx-icon.trade-buy{background:rgba(63,185,143,0.1);color:var(--teal);border-color:rgba(63,185,143,0.22);}
+  .tx-icon.trade-sell{background:rgba(217,112,95,0.1);color:var(--rose);border-color:rgba(217,112,95,0.22);}
+  .tx-icon.trade-win{background:rgba(63,185,143,0.15);color:var(--teal);border-color:rgba(63,185,143,0.3);}
+  .tx-icon.trade-loss{background:rgba(217,112,95,0.15);color:var(--rose);border-color:rgba(217,112,95,0.3);}
+  .tx-icon.deposit{background:rgba(110,168,254,0.1);color:#6ea8fe;border-color:rgba(110,168,254,0.22);}
+
+  .tx-body{flex:1;min-width:0;}
+  .tx-title{font-weight:600;font-size:.92rem;color:var(--text);margin-bottom:3px;}
+  .tx-sub{font-size:.75rem;color:var(--text-faint);display:flex;gap:10px;flex-wrap:wrap;}
+  .tx-date{font-size:.7rem;color:var(--text-faint);margin-top:3px;}
+
+  .tx-right{text-align:right;flex:none;}
+  .tx-amount{font-family:'Fraunces',serif;font-size:1.05rem;font-weight:600;}
+  .tx-amount.up{color:var(--teal);}
+  .tx-amount.down{color:var(--rose);}
+  .tx-amount.neutral{color:var(--text);}
+  .tx-status{font-size:.65rem;font-weight:700;padding:3px 9px;border-radius:20px;margin-top:5px;display:inline-block;letter-spacing:.4px;}
+  .tx-status.win{background:#0f2420;color:var(--teal);border:1px solid #1e4a3f;}
+  .tx-status.loss{background:#251616;color:var(--rose);border:1px solid #4a2a28;}
+  .tx-status.open{background:rgba(201,149,79,0.12);color:var(--copper);border:1px solid rgba(201,149,79,0.3);}
+  .tx-status.pending{background:rgba(110,168,254,0.12);color:#6ea8fe;border:1px solid rgba(110,168,254,0.3);}
+  .tx-status.completed{background:#0f2420;color:var(--teal);border:1px solid #1e4a3f;}
+  .tx-status.declined{background:#251616;color:var(--rose);border:1px solid #4a2a28;}
+
+  .empty{padding:60px 20px;text-align:center;color:var(--text-faint);}
+  .empty i{font-size:2.4rem;opacity:.5;margin-bottom:14px;display:block;}
+
+  .loading{text-align:center;padding:40px;color:var(--text-faint);}
+  .loading i{font-size:1.6rem;color:var(--copper);animation:spin 1s linear infinite;display:inline-block;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="top">
+    <div>
+      <a href="dashboard.html" class="back-link"><i class="fas fa-arrow-left"></i> Back to dashboard</a>
+      <h1 style="margin-top:12px;">Transaction History</h1>
+      <div class="sub">All your trades, deposits and purchases in one place</div>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat">
+      <div class="s-label">Total Trades</div>
+      <div class="s-val" id="statTrades">0</div>
+    </div>
+    <div class="stat">
+      <div class="s-label">Win Rate</div>
+      <div class="s-val" id="statWinRate">0%</div>
+    </div>
+    <div class="stat">
+      <div class="s-label">Net P&L</div>
+      <div class="s-val" id="statPnl">$0.00</div>
+    </div>
+  </div>
+
+  <div class="filters">
+    <button class="filter active" data-filter="all"><i class="fas fa-list"></i> All</button>
+    <button class="filter" data-filter="trade"><i class="fas fa-arrow-trend-up"></i> Trades</button>
+    <button class="filter" data-filter="buy"><i class="fas fa-coins"></i> Buys</button>
+    <button class="filter" data-filter="deposit"><i class="fas fa-arrow-down"></i> Deposits</button>
+  </div>
+
+  <div class="history-list" id="historyList">
+    <div class="loading"><i class="fas fa-spinner"></i></div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAueqbCcGN_LKDTd6YnPkPcWSIufFqsqwM",
+  authDomain: "fedex-4bdba.firebaseapp.com",
+  projectId: "fedex-4bdba",
+  storageBucket: "fedex-4bdba.firebasestorage.app",
+  messagingSenderId: "770647474446",
+  appId: "1:770647474446:web:8a3a4c595b2286e7ab575f"
+};
+if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const ADMIN_EMAIL = 'avaboremiracle@gmail.com';
+
+const fmt = (n)=> '$' + (n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtCoin = (n, sym)=> (n||0).toFixed(sym === 'XAU' ? 4 : 8);
+
+let currentUser = null;
+let allItems = [];
+let activeFilter = 'all';
+
+/* ============ AUTH GUARD ============ */
+auth.onAuthStateChanged(async (user)=>{
+  if(!user){ window.location.href='index.html'; return; }
+  currentUser = user;
+  if(user.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()){
+    const doc = await db.collection('users').doc(user.uid).get();
+    if(!doc.exists || doc.data().status !== 'approved'){
+      await auth.signOut();
+      window.location.href='index.html';
+      return;
+    }
+  }
+  loadAll();
+});
+
+async function loadAll(){
+  try {
+    const [tradesSnap, depositsSnap, txSnap] = await Promise.all([
+      db.collection('trades').where('uid','==',currentUser.uid).get(),
+      db.collection('depositRequests').where('uid','==',currentUser.uid).get(),
+      db.collection('transactions').where('uid','==',currentUser.uid).get()
+    ]);
+
+    allItems = [];
+
+    tradesSnap.forEach(d=>{
+      const t = d.data();
+      allItems.push({
+        type: 'trade',
+        id: d.id,
+        data: t,
+        timestamp: t.createdAt?.toMillis ? t.createdAt.toMillis() : (t.createdAt?.seconds ? t.createdAt.seconds * 1000 : 0)
+      });
+    });
+    depositsSnap.forEach(d=>{
+      const t = d.data();
+      allItems.push({
+        type: 'deposit',
+        id: d.id,
+        data: t,
+        timestamp: t.requestedAt?.toMillis ? t.requestedAt.toMillis() : (t.requestedAt?.seconds ? t.requestedAt.seconds * 1000 : 0)
+      });
+    });
+    txSnap.forEach(d=>{
+      const t = d.data();
+      if(t.type === 'buy'){
+        allItems.push({
+          type: 'buy',
+          id: d.id,
+          data: t,
+          timestamp: t.createdAt?.toMillis ? t.createdAt.toMillis() : (t.createdAt?.seconds ? t.createdAt.seconds * 1000 : 0)
+        });
+      }
+    });
+
+    allItems.sort((a,b)=> b.timestamp - a.timestamp);
+    computeStats();
+    render();
+  } catch(err){
+    console.error(err);
+    document.getElementById('historyList').innerHTML = `<div class="empty"><i class="fas fa-exclamation-triangle"></i>Could not load history.<br><small>${err.message}</small></div>`;
+  }
+}
+
+function computeStats(){
+  const trades = allItems.filter(x=>x.type==='trade');
+  const closed = trades.filter(t => t.data.status === 'win' || t.data.status === 'loss');
+  const wins = trades.filter(t => t.data.status === 'win').length;
+  const netPnl = trades.reduce((sum, t)=>{
+    if(t.data.status === 'win') return sum + (t.data.stakeValue || 0);
+    if(t.data.status === 'loss') return sum - (t.data.stakeValue || 0);
+    return sum;
+  }, 0);
+  document.getElementById('statTrades').textContent = trades.length;
+  document.getElementById('statWinRate').textContent = closed.length ? Math.round(wins / closed.length * 100) + '%' : '0%';
+  const pnlEl = document.getElementById('statPnl');
+  pnlEl.textContent = (netPnl >= 0 ? '+' : '') + fmt(Math.abs(netPnl));
+  pnlEl.className = 's-val ' + (netPnl >= 0 ? 'up' : 'down');
+}
+
+function timeAgo(ms){
+  if(!ms) return '—';
+  const diff = Date.now() - ms;
+  const s = Math.floor(diff/1000);
+  if(s < 60) return 'Just now';
+  const m = Math.floor(s/60);
+  if(m < 60) return m + 'm ago';
+  const h = Math.floor(m/60);
+  if(h < 24) return h + 'h ago';
+  const d = Math.floor(h/24);
+  if(d < 7) return d + 'd ago';
+  return new Date(ms).toLocaleDateString();
+}
+
+function render(){
+  const list = document.getElementById('historyList');
+  const items = allItems.filter(x => activeFilter === 'all' || x.type === activeFilter);
+  if(items.length === 0){
+    list.innerHTML = `<div class="empty"><i class="fas fa-inbox"></i>No transactions yet</div>`;
+    return;
+  }
+  list.innerHTML = items.map(renderItem).join('');
+}
+
+function renderItem(item){
+  if(item.type === 'trade') return renderTrade(item.data);
+  if(item.type === 'deposit') return renderDeposit(item.data);
+  if(item.type === 'buy') return renderBuy(item.data);
+  return '';
+}
+
+function renderTrade(t){
+  const isBuy = t.direction === 'BUY';
+  const status = t.status || 'open';
+  let iconClass = isBuy ? 'trade-buy' : 'trade-sell';
+  if(status === 'win') iconClass = 'trade-win';
+  if(status === 'loss') iconClass = 'trade-loss';
+  const iconFA = isBuy ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down';
+  const title = `${t.direction} ${t.asset}/USD Trade`;
+  const subtitle = `${fmtCoin(t.amount, t.asset)} ${t.asset} · Entry ${fmt(t.entryPrice)}`;
+  const dateStr = timeAgo(t.createdAt?.toMillis ? t.createdAt.toMillis() : (t.createdAt?.seconds ? t.createdAt.seconds*1000 : 0));
+
+  let amountHtml = '';
+  if(status === 'open') amountHtml = `<div class="tx-amount neutral">${fmt(t.stakeValue)}</div>`;
+  else if(status === 'win') amountHtml = `<div class="tx-amount up">+${fmt((t.stakeValue||0))}</div>`;
+  else if(status === 'loss') amountHtml = `<div class="tx-amount down">-${fmt((t.stakeValue||0))}</div>`;
+
+  const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
+
+  return `
+    <div class="tx-card">
+      <div class="tx-icon ${iconClass}"><i class="fas ${iconFA}"></i></div>
+      <div class="tx-body">
+        <div class="tx-title">${title}</div>
+        <div class="tx-sub">${subtitle}</div>
+        <div class="tx-date">${dateStr}</div>
+      </div>
+      <div class="tx-right">
+        ${amountHtml}
+        <div class="tx-status ${status}">${statusLabel}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderDeposit(d){
+  const status = d.status || 'pending';
+  const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
+  const dateStr = timeAgo(d.requestedAt?.toMillis ? d.requestedAt.toMillis() : (d.requestedAt?.seconds ? d.requestedAt.seconds*1000 : 0));
+  return `
+    <div class="tx-card">
+      <div class="tx-icon deposit"><i class="fas fa-arrow-down"></i></div>
+      <div class="tx-body">
+        <div class="tx-title">Deposit Request</div>
+        <div class="tx-sub">${d.method || 'BTC'} · ${d.wallet ? d.wallet.slice(0,14)+'…' : ''}</div>
+        <div class="tx-date">${dateStr}</div>
+      </div>
+      <div class="tx-right">
+        <div class="tx-amount neutral">${fmt(d.amount)}</div>
+        <div class="tx-status ${status}">${statusLabel}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderBuy(b){
+  const dateStr = timeAgo(b.createdAt?.toMillis ? b.createdAt.toMillis() : (b.createdAt?.seconds ? b.createdAt.seconds*1000 : 0));
+  return `
+    <div class="tx-card">
+      <div class="tx-icon"><i class="fas fa-coins"></i></div>
+      <div class="tx-body">
+        <div class="tx-title">Bought ${b.asset}</div>
+        <div class="tx-sub">${fmtCoin(b.amountCoins, b.asset)} ${b.asset} · at ${fmt(b.price)}</div>
+        <div class="tx-date">${dateStr}</div>
+      </div>
+      <div class="tx-right">
+        <div class="tx-amount neutral">-${fmt(b.amountUSD)}</div>
+        <div class="tx-status completed">Completed</div>
+      </div>
+    </div>
+  `;
+}
+
+document.querySelectorAll('.filter').forEach(f=>{
+  f.addEventListener('click', ()=>{
+    document.querySelectorAll('.filter').forEach(x=>x.classList.remove('active'));
+    f.classList.add('active');
+    activeFilter = f.dataset.filter;
+    render();
+  });
+});
+</script>
+
+<!--Start of Tawk.to Script-->
+<script type="text/javascript">
+var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+(function(){
+var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+s1.async=true;
+s1.src='https://embed.tawk.to/6aab42073768263445ac02ab/1k2mfjro1';
+s1.charset='UTF-8';
+s1.setAttribute('crossorigin','*');
+s0.parentNode.insertBefore(s1,s0);
+})();
+</script>
+<!--End of Tawk.to Script-->
+</body>
+</html>
